@@ -19,10 +19,9 @@ services:
     image: postgres:15.2
     restart: always
     volumes:
-      - ../2. Init Database:/docker-entrypoint-initdb.d
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5433:5432"
+      - "${POSTGRES_PORT}:5432"
     env_file:
       - ./.env
     healthcheck:

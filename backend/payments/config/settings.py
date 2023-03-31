@@ -1,6 +1,6 @@
+from decimal import Decimal
 from pathlib import Path
-import os
-import environ
+
 from environs import Env
 
 env = Env()
@@ -62,9 +62,15 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 
 DATABASES = {
-    'default': env.dj_db_url('DATABASE_URL', 'postgres://...'),
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'HOST': env.str('POSTGRES_HOST'),
+        'PORT': env.int('POSTGRES_PORT'),
+        'NAME': env.str('POSTGRES_DB'),
+        'USER': env.str('POSTGRES_USER'),
+        'PASSWORD': env.str('POSTGRES_PASSWORD'),
+    }
 }
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -113,21 +119,26 @@ SPECTACULAR_SETTINGS = {
 }
 
 ROLLBAR = {
-    'access_token': env.str('rollbar_access_token'),
+    'access_token': env.str('ROLLBAR_ACCESS_TOKEN'),
     'environment': 'development' if DEBUG else 'production',
     'code_version': '1.0',
     'root': BASE_DIR,
 }
 
-MAX_BALANCE_DIGITS = 11
-
 CELERY_BROKER_URL = 'redis://redis:6379/0'
 
-CACHES = {    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': 'redis://redis:6379/',
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        }
-    }
+CACHES = {
+    'default':
+        {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': 'redis://redis:6379/',
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            },
+        },
 }
+
+# Business Settings
+DEFAULT_CURRENCY = 'RUB'
+MAX_BALANCE_DIGITS = 11
+MAX_COMMISSION_VALUE = Decimal(100)

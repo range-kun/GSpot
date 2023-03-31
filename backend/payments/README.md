@@ -15,9 +15,9 @@ TODO
 - `ALLOWED_HOSTS` - список разрешенных хостов.
 - `DATABASE` - тип БД (например `postgres`)
 - `DATABASE_URL` - адрес для подключения к БД PostgreSQL. [Формат записи](https://github.com/jacobian/dj-database-url#url-schema)
-- `account_id` - id вашего магазина yookassa.
-- `shop_secret_key` - api ключ вашего магазина yookassa.
-- `rollbar_access_token` - токен ключ rollbar для логирования событий.
+- `SHOP_ACCOUNT_ID` - id вашего магазина yookassa.
+- `SHOP_SECRET_KEY` - api ключ вашего магазина yookassa.
+- `ROLLBAR_ACCESS_TOKEN` - токен ключ rollbar для логирования событий.
 
 ## Установка и настройка flake8
 На проекте используется линтер flake8 с плагинами. Flake8 не дает возможности перечислить используемые плагины,

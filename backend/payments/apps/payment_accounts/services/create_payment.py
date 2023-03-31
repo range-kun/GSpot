@@ -1,49 +1,46 @@
+from dataclasses import asdict
+
 from environs import Env
 from yookassa import Configuration, Payment
 
+from .. import schemas
 from ..models import Account, BalanceChange
 
 env = Env()
 env.read_env()
-Configuration.account_id = env.int('account_id')
-Configuration.secret_key = env.str('shop_secret_key')
+Configuration.account_id = env.int('SHOP_ACCOUNT_ID')
+Configuration.secret_key = env.str('SHOP_SECRET_KEY')
 
 
-def create_payment(serialized_data):
-    uuid = serialized_data.get('uuid')
-    value = serialized_data.get('value')
-    commission = serialized_data.get('commission')
-    payment_type = serialized_data.get('payment_type')
-    return_url = serialized_data.get('return_url')
-    value_with_commission = value * (1 / (1 - commission / 100))
-    user_account, created = Account.objects.get_or_create(user_uid=uuid)
+def create_yookassa_payment(
+        payment_data: schemas.PaymentCreateDataClass,
+) -> str:
+    user_account, _ = Account.objects.get_or_create(
+        user_uuid=payment_data.user_uuid,
+    )
 
-    change = BalanceChange.objects.create(
+    balance_change = BalanceChange.objects.create(
         account_id=user_account,
-        amount=value,
         is_accepted=False,
         operation_type='DEPOSIT',
     )
 
-    payment = Payment.create({
-        'amount': {
-            'value': value_with_commission,
-            'currency': 'RUB',
+    yookassa_payment_info = schemas.YookassaFullPaymentDataClass(
+        amount=schemas.AmountDataClass(
+            value=payment_data.payment_amount,
+        ),
+        payment_method_data=schemas.PaymentMethodData(
+            type=payment_data.payment_type.value,
+        ),
+        confirmation=schemas.ConfirmationDataClass(
+            type='redirect',
+            return_url=payment_data.return_url,
+        ),
+        metadata={
+            'balance_change_id': balance_change.id,
         },
-        'payment_method_data': {
-            'type': payment_type,
-        },
-        'confirmation': {
-            'type': 'redirect',
-            'return_url': return_url,
-        },
-        'metadata': {
-            'table_id': change.id,
-            'user_id': user_account.id,
-        },
-        'capture': True,
-        'refundable': False,
-        'description': 'Пополнение на ' + str(value),
-    })
+        description=f'Пополнение на {str(payment_data.payment_amount)}',
+    ),
+    payment = Payment.create(asdict(yookassa_payment_info))
 
     return payment.confirmation.confirmation_url
