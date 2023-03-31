@@ -1,6 +1,7 @@
 from decimal import Decimal
 from pathlib import Path
-
+import os
+import environ
 from environs import Env
 
 env = Env()
@@ -63,14 +64,16 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'HOST': env.str('POSTGRES_HOST'),
-        'PORT': env.int('POSTGRES_PORT'),
-        'NAME': env.str('POSTGRES_DB'),
-        'USER': env.str('POSTGRES_USER'),
-        'PASSWORD': env.str('POSTGRES_PASSWORD'),
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "HOST": os.environ.get("POSTGRES_HOST"),
+        "PORT": os.environ.get("POSTGRES_PORT"),
+        "USER": os.environ.get("POSTGRES_USER"),
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
+        "NAME": os.environ.get("POSTGRES_DB"),
     }
+
 }
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -97,6 +100,8 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
