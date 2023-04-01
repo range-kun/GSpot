@@ -50,7 +50,7 @@ class ConfirmationDataClass:
 
 
 @dataclass
-class YookassaFullPaymentDataClass:
+class YookassaPaymentCreate:
     amount: AmountDataClass
     payment_method_data: PaymentMethodData
     confirmation: ConfirmationDataClass
@@ -58,3 +58,17 @@ class YookassaFullPaymentDataClass:
     capture: bool = True
     refundable: bool = False
     description: str | None = None
+
+
+@dataclass
+class YookassaPaymentResponseObject:
+    id: UUID
+    income_amount: AmountDataClass
+    description: str
+    metadata: dict
+
+
+@dataclass
+class YookassaPaymentResponse:
+    event: PaymentResponseStatuses
+    object: YookassaPaymentResponseObject

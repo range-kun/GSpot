@@ -14,7 +14,6 @@ TODO
 - `DEBUG`- настройка Django для ключения отладочного режима.
 - `ALLOWED_HOSTS` - список разрешенных хостов.
 - `DATABASE` - тип БД (например `postgres`)
-- `DATABASE_URL` - адрес для подключения к БД PostgreSQL. [Формат записи](https://github.com/jacobian/dj-database-url#url-schema)
 - `SHOP_ACCOUNT_ID` - id вашего магазина yookassa.
 - `SHOP_SECRET_KEY` - api ключ вашего магазина yookassa.
 - `ROLLBAR_ACCESS_TOKEN` - токен ключ rollbar для логирования событий.

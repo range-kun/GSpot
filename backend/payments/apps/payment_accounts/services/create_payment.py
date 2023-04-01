@@ -25,7 +25,7 @@ def create_yookassa_payment(
         operation_type='DEPOSIT',
     )
 
-    yookassa_payment_info = schemas.YookassaFullPaymentDataClass(
+    yookassa_payment_info = schemas.YookassaPaymentCreate(
         amount=schemas.AmountDataClass(
             value=payment_data.payment_amount,
         ),
@@ -37,10 +37,11 @@ def create_yookassa_payment(
             return_url=payment_data.return_url,
         ),
         metadata={
-            'balance_change_id': balance_change.id,
+            'account_id': user_account.pk,
+            'balance_change_id': balance_change.pk,
         },
         description=f'Пополнение на {str(payment_data.payment_amount)}',
-    ),
+    )
     payment = Payment.create(asdict(yookassa_payment_info))
 
     return payment.confirmation.confirmation_url
