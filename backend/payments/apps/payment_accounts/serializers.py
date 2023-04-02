@@ -3,7 +3,7 @@ from django.core.validators import MinValueValidator
 from rest_enumfield import EnumField
 from rest_framework import serializers
 
-from apps.payment_accounts.schemas import PaymentResponseStatuses, PaymentTypes
+from apps.payment_accounts.schemas import PaymentResponseStatuses, YookassaPaymentTypes
 
 
 class PaymentCommissionSerializer(serializers.Serializer):
@@ -12,7 +12,7 @@ class PaymentCommissionSerializer(serializers.Serializer):
         max_digits=settings.MAX_BALANCE_DIGITS,
         validators=[MinValueValidator(0, message='Insufficient Funds')],
     )
-    payment_type = EnumField(choices=PaymentTypes)
+    payment_type = EnumField(choices=YookassaPaymentTypes)
 
 
 class CreatePaymentSerializer(serializers.Serializer):
@@ -22,7 +22,7 @@ class CreatePaymentSerializer(serializers.Serializer):
         max_digits=settings.MAX_BALANCE_DIGITS,
         validators=[MinValueValidator(0, message='Insufficient Funds')],
     )
-    payment_type = EnumField(choices=PaymentTypes)
+    payment_type = EnumField(choices=YookassaPaymentTypes)
     return_url = serializers.URLField()
 
 

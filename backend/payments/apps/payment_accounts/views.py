@@ -5,7 +5,7 @@ from rest_framework.response import Response
 
 from . import schemas
 from . import serializers
-from .services.create_payment import create_yookassa_payment
+from .services.create_payment import deposit_to_balance
 from .services.payment_acceptance import payment_acceptance
 from .services.payment_commission import calculate_payment_with_commission
 
@@ -48,7 +48,7 @@ class CreatePaymentView(CreateAPIView):
             )
             return
 
-        confirmation_url = create_yookassa_payment(payment_data)
+        confirmation_url = deposit_to_balance(payment_data)
 
         return Response({'confirmation_url': confirmation_url}, 200)
 

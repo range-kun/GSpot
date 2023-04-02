@@ -13,7 +13,7 @@ class PaymentResponseStatuses(enum.Enum):
     refund_succeeded = 'refund.succeeded'
 
 
-class PaymentTypes(enum.Enum):
+class YookassaPaymentTypes(enum.Enum):
     bank_card = 'bank_card'
     yoo_money = 'yoo_money'
     sberbank = 'sberbank'
@@ -22,7 +22,7 @@ class PaymentTypes(enum.Enum):
 
 @dataclass
 class PaymentInfo:
-    payment_type: PaymentTypes
+    payment_type: YookassaPaymentTypes
     payment_amount: Decimal
 
 
@@ -40,7 +40,7 @@ class AmountDataClass:
 
 @dataclass
 class PaymentMethodData:
-    type: PaymentTypes
+    type: YookassaPaymentTypes
 
 
 @dataclass
