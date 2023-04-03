@@ -2,19 +2,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from uuid import UUID
 
-from apps.payment_accounts.schemas import YookassaPaymentTypes
-
-"""
-2) Когда нажимают оплатить, к нам на отдельную ручку (или по шине? хз) должен прийти следующие данные
- - user-id плаельщика
- - список [id игры, цена,  user-id кому принадлежит]
- - способ оплаты
-"""
-
-
-@dataclass
-class PaymentTypes(YookassaPaymentTypes):
-    from_balance = 'from_balance'
+from apps.external_payments.schemas import PaymentTypes
 
 
 @dataclass
@@ -25,7 +13,7 @@ class ItemPaymentData:
 
 
 @dataclass
-class InvoiceData:
+class IncomeData:
     user_uuid: UUID
     payment_type: PaymentTypes
     items_payment_data: list[ItemPaymentData]

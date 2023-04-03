@@ -21,21 +21,23 @@ class YookassaPaymentTypes(enum.Enum):
 
 
 @dataclass
-class PaymentInfo:
-    payment_type: YookassaPaymentTypes
-    payment_amount: Decimal
-
-
-@dataclass
-class PaymentCreateDataClass(PaymentInfo):
-    user_uuid: UUID
-    return_url: str
-
-
-@dataclass
 class AmountDataClass:
     value: Decimal
     currency: str = settings.DEFAULT_CURRENCY
+
+
+@dataclass
+class YookassaPaymentResponseObject:
+    id: UUID
+    income_amount: AmountDataClass
+    description: str
+    metadata: dict
+
+
+@dataclass
+class YookassaPaymentResponse:
+    event: PaymentResponseStatuses
+    object: YookassaPaymentResponseObject
 
 
 @dataclass
@@ -60,15 +62,18 @@ class YookassaPaymentCreate:
     description: str | None = None
 
 
-@dataclass
-class YookassaPaymentResponseObject:
-    id: UUID
-    income_amount: AmountDataClass
-    description: str
-    metadata: dict
+class PaymentTypes(enum.Enum):
+    from_balance = 'from_balance'
+    yookassa_payments: YookassaPaymentTypes
 
 
 @dataclass
-class YookassaPaymentResponse:
-    event: PaymentResponseStatuses
-    object: YookassaPaymentResponseObject
+class YookassaPaymentInfo:
+    payment_type: PaymentTypes
+    payment_amount: Decimal
+
+
+@dataclass
+class PaymentCreateDataClass(YookassaPaymentInfo):
+    user_uuid: UUID
+    return_url: str
