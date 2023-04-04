@@ -1,9 +1,10 @@
 import rollbar
 
-from apps.external_payments.schemas import YookassaPaymentResponse
+from apps.external_payments.schemas import YookassaPaymentResponse, YookassaPaymentTypes
 from apps.transactions.models import Invoice
 from . import payment_proccessor
 from .utils import parse_model_instance
+from apps.payment_accounts.services.payment_commission import calculate_payment_without_commission
 
 
 def yookassa_payment_acceptance(
@@ -33,11 +34,15 @@ def yookassa_payment_acceptance(
         error_message=f"Can't get invoice instance for payment id {payment_body.id}",
         pk=int(payment_body.metadata['invoice_id']),
     )
-    if invoice_object.total_price != income_value:
+    price_without_commission = calculate_payment_without_commission(
+        YookassaPaymentTypes.qiwi,
+        invoice_object.total_price,
+    )
+    if price_without_commission != income_value:
         rollbar.report_message(
             (
                 f'Received payment amount: {income_value}'
-                f'But purchased price equal to: {invoice_object.total_price}'
+                f'But purchased price equal to: {price_without_commission}'
                 f'For invoice {invoice_object.invoice_id}'
             ),
             'error',

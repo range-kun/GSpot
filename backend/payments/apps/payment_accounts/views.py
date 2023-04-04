@@ -24,7 +24,8 @@ class CalculatePaymentCommissionView(CreateAPIView):
             return
 
         amount_with_commission = calculate_payment_with_commission(
-            commission_data,
+            commission_data.payment_type,
+            commission_data.payment_amount
         )
         return Response({'amount with commission': amount_with_commission})
 

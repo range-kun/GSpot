@@ -69,7 +69,7 @@ class PaymentTypes(enum.Enum):
 
 @dataclass
 class YookassaPaymentInfo:
-    payment_type: PaymentTypes
+    payment_type: PaymentTypes.yookassa_payments
     payment_amount: Decimal
 
 
