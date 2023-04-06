@@ -2,7 +2,9 @@ import rollbar
 from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
 
-from apps.external_payments.schemas import YookassaPaymentInfo, PaymentCreateDataClass
+from apps.external_payments.schemas import (PaymentCreateDataClass,
+                                            YookassaPaymentInfo)
+
 from . import serializers
 from .services.balance_change import request_balance_deposit_url
 from .services.payment_commission import calculate_payment_with_commission

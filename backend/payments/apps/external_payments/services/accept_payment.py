@@ -1,10 +1,13 @@
 import rollbar
 
-from apps.external_payments.schemas import YookassaPaymentResponse, YookassaPaymentTypes
+from apps.external_payments.schemas import (YookassaPaymentResponse,
+                                            YookassaPaymentTypes)
+from apps.payment_accounts.services.payment_commission import \
+    calculate_payment_without_commission
 from apps.transactions.models import Invoice
+
 from . import payment_proccessor
 from .utils import parse_model_instance
-from apps.payment_accounts.services.payment_commission import calculate_payment_without_commission
 
 
 def yookassa_payment_acceptance(

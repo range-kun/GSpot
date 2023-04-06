@@ -1,6 +1,7 @@
 from decimal import Decimal
 
-from apps.external_payments.schemas import YookassaPaymentTypes, YookassaPaymentInfo
+from apps.external_payments.schemas import (YookassaPaymentInfo,
+                                            YookassaPaymentTypes)
 
 TWO_PLACES = Decimal(10) ** -2
 

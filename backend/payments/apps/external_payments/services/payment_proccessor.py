@@ -5,12 +5,13 @@ import rollbar
 from django.conf import settings
 from django.db import transaction
 
-from apps.payment_accounts.models import BalanceChange, Account
+from apps.payment_accounts.models import Account, BalanceChange
 from apps.transactions.models import Invoice, Transaction, TransactionHistory
-from .utils import parse_model_instance
+
 from ..exceptions import BrokenInvoiceError, ExtraTransactionHistoriesError
 from ..schemas import PaymentResponseStatuses, YookassaPaymentResponse
 from ..tasks import get_item_for_self_user, gift_item_to_other_user
+from .utils import parse_model_instance
 
 
 class BalanceChangeProcessor:
