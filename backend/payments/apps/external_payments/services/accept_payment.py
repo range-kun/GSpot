@@ -1,7 +1,9 @@
 import rollbar
 
 from apps.external_payments.schemas import YookassaPaymentResponse, YookassaPaymentTypes
-from apps.payment_accounts.services.payment_commission import calculate_payment_without_commission
+from apps.payment_accounts.services.payment_commission import (
+    calculate_payment_without_commission,
+)
 from apps.transactions.models import Invoice
 from . import payment_proccessor
 from .utils import parse_model_instance
@@ -10,7 +12,7 @@ from .utils import parse_model_instance
 def yookassa_payment_acceptance(
         yookassa_response: YookassaPaymentResponse,
 ) -> bool:
-    payment_body = yookassa_response.object_
+    payment_body = yookassa_response.object
     income_value = payment_body.income_amount.value
     account_id = int(payment_body.metadata['account_id'])
     rollbar.report_message(

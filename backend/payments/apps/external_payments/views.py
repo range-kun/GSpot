@@ -1,5 +1,5 @@
 import rollbar
-from dacite import from_dict, MissingValueError
+from dacite import MissingValueError, from_dict
 from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
 

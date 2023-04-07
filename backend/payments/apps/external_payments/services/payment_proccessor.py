@@ -5,7 +5,7 @@ import rollbar
 from django.conf import settings
 from django.db import transaction
 
-from apps.payment_accounts.models import BalanceChange, Account
+from apps.payment_accounts.models import Account, BalanceChange
 from apps.transactions.models import Invoice, Transaction, TransactionHistory
 from .utils import parse_model_instance
 from ..exceptions import ExtraTransactionHistoriesError

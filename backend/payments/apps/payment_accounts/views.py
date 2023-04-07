@@ -2,7 +2,7 @@ import rollbar
 from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
 
-from apps.external_payments.schemas import YookassaPaymentInfo, PaymentCreateDataClass
+from apps.external_payments.schemas import PaymentCreateDataClass, YookassaPaymentInfo
 from . import serializers
 from .services.balance_change import request_balance_deposit_url
 from .services.payment_commission import calculate_payment_with_commission
@@ -25,7 +25,7 @@ class CalculatePaymentCommissionView(CreateAPIView):
 
         amount_with_commission = calculate_payment_with_commission(
             commission_data.payment_type,
-            commission_data.payment_amount
+            commission_data.payment_amount,
         )
         return Response({'amount with commission': amount_with_commission})
 

@@ -2,7 +2,7 @@ from uuid import UUID
 
 from django.core.exceptions import ValidationError
 
-from apps.external_payments.schemas import PaymentTypes, PaymentCreateDataClass
+from apps.external_payments.schemas import PaymentCreateDataClass, PaymentTypes
 from apps.external_payments.services.accept_payment import execute_invoice_operations
 from apps.external_payments.services.create_payment import get_yookassa_payment_url
 from apps.payment_accounts.models import Account, BalanceChange
