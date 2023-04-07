@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from uuid import UUID
 
-from apps.external_payments.schemas import PaymentTypes
+from apps.external_payments.schemas import PaymentTypes, YookassaPaymentTypes
 
 
 @dataclass
@@ -15,6 +15,6 @@ class ItemPaymentData:
 @dataclass
 class IncomeData:
     user_uuid: UUID
-    payment_type: PaymentTypes
+    payment_type: PaymentTypes | YookassaPaymentTypes
     items_payment_data: list[ItemPaymentData]
     return_url: str

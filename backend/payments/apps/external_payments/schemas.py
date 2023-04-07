@@ -1,8 +1,9 @@
 import enum
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal
 from uuid import UUID
 
+from dataclasses_json import config, dataclass_json
 from django.conf import settings
 
 
@@ -26,35 +27,52 @@ class AmountDataClass:
     currency: str = settings.DEFAULT_CURRENCY
 
 
+# RESPONSE PAYMENT SCHEMAS
+@dataclass
+class PaymentMethodDataResponse:
+    type_: YookassaPaymentTypes
+
+
+@dataclass_json
 @dataclass
 class YookassaPaymentResponseObject:
-    id: UUID
+    id_: UUID = field(metadata=config(field_name='id'))
     income_amount: AmountDataClass
     description: str
     metadata: dict
+    payment_method: PaymentMethodDataResponse
 
 
+@dataclass_json
 @dataclass
 class YookassaPaymentResponse:
     event: PaymentResponseStatuses
-    object: YookassaPaymentResponseObject
+    object_: YookassaPaymentResponseObject = field(
+        metadata=config(field_name='object'),
+    )
 
 
-@dataclass
-class PaymentMethodData:
-    type: YookassaPaymentTypes
-
-
+# CREATE PAYMENT SCHEMAS
+@dataclass_json
 @dataclass
 class ConfirmationDataClass:
-    type: str
+    confirmation_type: str = field(metadata=config(field_name='type'))
     return_url: str
 
 
+@dataclass_json
+@dataclass
+class PaymentMethodDataCreate:
+    payment_type: YookassaPaymentTypes = field(
+        metadata=config(field_name='type'),
+    )
+
+
+@dataclass_json
 @dataclass
 class YookassaPaymentCreate:
     amount: AmountDataClass
-    payment_method_data: PaymentMethodData
+    payment_method_data: PaymentMethodDataCreate
     confirmation: ConfirmationDataClass
     metadata: dict
     capture: bool = True
@@ -69,7 +87,7 @@ class PaymentTypes(enum.Enum):
 
 @dataclass
 class YookassaPaymentInfo:
-    payment_type: PaymentTypes.yookassa_payments
+    payment_type: YookassaPaymentTypes
     payment_amount: Decimal
 
 

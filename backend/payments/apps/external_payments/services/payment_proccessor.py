@@ -8,7 +8,7 @@ from django.db import transaction
 from apps.payment_accounts.models import BalanceChange, Account
 from apps.transactions.models import Invoice, Transaction, TransactionHistory
 from .utils import parse_model_instance
-from ..exceptions import BrokenInvoiceError, ExtraTransactionHistoriesError
+from ..exceptions import ExtraTransactionHistoriesError
 from ..schemas import PaymentResponseStatuses, YookassaPaymentResponse
 from ..tasks import get_item_for_self_user, gift_item_to_other_user
 
@@ -16,7 +16,7 @@ from ..tasks import get_item_for_self_user, gift_item_to_other_user
 class BalanceChangeProcessor:
     def __init__(self, yookassa_response: YookassaPaymentResponse):
         self.yookassa_payment_status = yookassa_response.event
-        self.payment_body = yookassa_response.object
+        self.payment_body = yookassa_response.object_
         self.income_value = self.payment_body.income_amount.value
 
         self.balance_change_object = self.parse_balance_object()
@@ -24,7 +24,9 @@ class BalanceChangeProcessor:
     def parse_balance_object(self) -> BalanceChange | None:
         return parse_model_instance(
             django_model=BalanceChange,
-            error_message=f"Can't get payment instance for payment id {self.payment_body.id}",
+            error_message=(
+                f"Can't get payment instance for payment id {self.payment_body.id_}"
+            ),
             pk=int(self.payment_body.metadata['balance_change_id']),
         )
 

@@ -20,7 +20,7 @@ class PaymentAcceptanceView(CreateAPIView):
                 "Can't parse response from yookassa.",
                 'error',
             )
-            return
+            return Response(200)
 
         try:
             # used from_dict function because
@@ -34,7 +34,8 @@ class PaymentAcceptanceView(CreateAPIView):
                 f'Schemas and serializers got different structure. Got next error: {str(error)}',
                 'error',
             )
-            return
+            print(error)
+            return Response(200)
 
         if yookassa_payment_acceptance(yookassa_data):
             return Response(200)

@@ -1,5 +1,3 @@
-from dataclasses import asdict
-
 from yookassa import Payment
 
 from .. import schemas
@@ -15,16 +13,17 @@ def get_yookassa_payment_url(
         amount=schemas.AmountDataClass(
             value=payment_data.payment_amount,
         ),
-        payment_method_data=schemas.PaymentMethodData(
-            type=payment_data.payment_type.value,
+        payment_method_data=schemas.PaymentMethodDataCreate(
+            payment_type=payment_data.payment_type.value,
         ),
         confirmation=schemas.ConfirmationDataClass(
-            type='redirect',
+            confirmation_type='redirect',
             return_url=payment_data.return_url,
         ),
         metadata=metadata,
         description=f'Пополнение на {str(payment_data.payment_amount)}',
     )
-    payment = Payment.create(asdict(yookassa_payment_info))
+
+    payment = Payment.create(yookassa_payment_info.to_dict())
 
     return payment.confirmation.confirmation_url
