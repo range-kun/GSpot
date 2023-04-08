@@ -3,7 +3,7 @@ from django.core.validators import MinValueValidator
 from rest_enumfield import EnumField
 from rest_framework import serializers
 
-from .schemas import PaymentResponseStatuses, YookassaPaymentTypes
+from .schemas import PaymentResponseStatuses, PaymentTypes
 
 
 class BaseSerializer(serializers.Serializer):
@@ -45,12 +45,13 @@ class AmountSerializer(serializers.Serializer):
 
 
 class YookassaPaymentMethodSerializer(serializers.Serializer):
-    type_ = EnumField(choices=YookassaPaymentTypes)
+    type_ = EnumField(choices=PaymentTypes)
 
 
 class YookassaPaymentBodySerializer(serializers.Serializer):
     id_ = serializers.UUIDField()
     income_amount = AmountSerializer()
+    amount = AmountSerializer()
     description = serializers.CharField()
     metadata = serializers.DictField()
     payment_method = YookassaPaymentMethodSerializer()

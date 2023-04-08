@@ -55,12 +55,20 @@ class Transaction(models.Model):
     MAX_ITEM_PRICE = 10000  # in case of mistake
 
     account_from = models.ForeignKey(
-        Account, on_delete=models.PROTECT,
+        Account,
+        on_delete=models.PROTECT,
         related_name='transactions_account_from',
     )
     account_to = models.ForeignKey(
-        Account, on_delete=models.PROTECT,
+        Account,
+        on_delete=models.PROTECT,
         related_name='transactions_account_to',
+    )
+    developer_account = models.ForeignKey(
+        Account,
+        on_delete=models.PROTECT,
+        related_name='transactions',
+        null=True,
     )
     item_price = models.DecimalField(
         decimal_places=2,

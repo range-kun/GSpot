@@ -1,4 +1,5 @@
 import rollbar
+from rest_framework import status
 from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
 
@@ -14,7 +15,7 @@ class CalculatePaymentCommissionView(CreateAPIView):
     serializer_class = serializers.PaymentCommissionSerializer
 
     def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.POST)
+        serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
             commission_data = YookassaPaymentInfo(**serializer.validated_data)
@@ -23,7 +24,7 @@ class CalculatePaymentCommissionView(CreateAPIView):
                 f'Schemas and serializers got different structure. Got next error: {str(error)}'
                 'error',
             )
-            return
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         amount_with_commission = calculate_payment_with_commission(
             commission_data.payment_type,
@@ -36,7 +37,7 @@ class BalanceIncreaseView(CreateAPIView):
     serializer_class = serializers.BalanceIncreaseSerializer
 
     def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.POST)
+        serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
             payment_data = PaymentCreateDataClass(
@@ -47,8 +48,11 @@ class BalanceIncreaseView(CreateAPIView):
                 f'Schemas and serializers got different structure. Got next error: {str(error)}',
                 'error',
             )
-            return
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         confirmation_url = request_balance_deposit_url(payment_data)
 
-        return Response({'confirmation_url': confirmation_url}, 200)
+        return Response(
+            {'confirmation_url': confirmation_url},
+            status=status.HTTP_201_CREATED,
+        )

@@ -14,7 +14,7 @@ def parse_model_instance(
         pk: int,
 ) -> DjangoModel | None:
     try:
-        django_model_instance = django_model.objects.get(id=pk)
+        django_model_instance = django_model.objects.get(pk=pk)
     except ObjectDoesNotExist:
         rollbar.report_message(error_message, 'warning')
         return None

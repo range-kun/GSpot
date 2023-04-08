@@ -11,7 +11,7 @@ from apps.payment_accounts.services.payment_commission import \
     calculate_payment_without_commission
 from apps.transactions.models import Invoice
 
-from . import payment_proccessor as pay_proc
+from . import invoice_execution as pay_proc
 from .utils import parse_model_instance
 
 
@@ -30,6 +30,7 @@ class PaymentAcceptance(YookassaIncomePayment):
 
         self.balance_handler: BalanceChangeHandler | None = None
         self.income_invoice_handler: IncomeInvoiceHandler | None = None
+        self.payer_account = self.parse_user_account()
 
         self.payment_status = False
         self._run_payment_acceptance()
@@ -38,7 +39,7 @@ class PaymentAcceptance(YookassaIncomePayment):
         rollbar.report_message(
             (
                 f'Received payment data for: '
-                f'account_id: f{self.account_id}'
+                f'account_id: f{self.payer_account.pk}'
                 f'with payment amount: {self.income_value}'
             ),
             'info',
@@ -58,8 +59,18 @@ class PaymentAcceptance(YookassaIncomePayment):
         if self.income_invoice_handler.is_invoice_valid():
             execute_invoice_operations(
                 invoice_instance=self.income_invoice_handler.invoice_object,
-                account_id=self.account_id,
+                payer_account=self.payer_account,
+                decrease_amount=self.income_value,
             )
+
+    def parse_user_account(self):
+        return parse_model_instance(
+            django_model=Account,
+            error_message=(
+                f"Can't get user account instance for user id {self.account_id}"
+            ),
+            pk=self.account_id,
+        )
 
 
 class BalanceChangeHandler(YookassaIncomePayment):
@@ -97,28 +108,45 @@ class IncomeInvoiceHandler(YookassaIncomePayment):
     def __init__(self, yookassa_response: YookassaPaymentResponse):
         super().__init__(yookassa_response)
         self.invoice_object = self._parse_invoice_object()
+        self.invoice_total_price = self.invoice_object.total_price
 
     def is_invoice_valid(self):
-        if not self._is_invoice_price_correct():
+        if self._is_invoice_price_correct() is False:
             return False
+        if self._is_commission_correct() is False:
+            return False
+        return True
 
     def _parse_invoice_object(self) -> Invoice:
         return parse_model_instance(
             django_model=Invoice,
-            error_message=f"Can't get invoice instance for payment id {self.payment_body.id}",
-            pk=int(self.payment_body.metadata['invoice_id']),
+            error_message=f"Can't get invoice instance for payment id {self.payment_body.id_}",
+            pk=self.payment_body.metadata['invoice_id'],
         )
 
     def _is_invoice_price_correct(self):
+        if not self.invoice_total_price == self.payment_body.amount.value:
+            rollbar.report_message(
+                (
+                    f'Initial payment amount is: {self.payment_body.amount.value}'
+                    f'But invoice total price is: {self.invoice_total_price}'
+                    f'For invoice {self.invoice_object.invoice_id}'
+                ),
+                'error',
+            )
+            return False
+        return True
+
+    def _is_commission_correct(self):
         price_without_commission = calculate_payment_without_commission(
             self.payment_body.payment_method.type_,
-            self.invoice_object.total_price,
+            self.invoice_total_price,
         )
         if price_without_commission != self.income_value:
             rollbar.report_message(
                 (
                     f'Received payment amount: {self.income_value}'
-                    f'But purchased price equal to: {price_without_commission}'
+                    f'But invoice price_without_commission equal to: {price_without_commission}'
                     f'For invoice {self.invoice_object.invoice_id}'
                 ),
                 'error',
@@ -132,8 +160,6 @@ def increase_user_balance(
         balance_change_object: BalanceChange,
         amount: Decimal,
 ) -> None:
-    # in future handle situation if database not connected
-    # and code below throw exception
     with transaction.atomic():
         balance_change_object.is_accepted = True
         balance_change_object.amount = amount
@@ -144,41 +170,44 @@ def increase_user_balance(
             amount=Decimal(amount),
         )
     rollbar.report_message((
-        f'Deposit {balance_change_object.amount} {settings.DEFAULT_CURRENCY} to '
-        f'user account {balance_change_object.account_id}'
+        f'Deposit {balance_change_object.amount} {settings.DEFAULT_CURRENCY} '
+        f'to user account {balance_change_object.account_id}'
     ),
         'info',
     )
 
 
-def decrease_user_balance(*, account_pk: int, amount: Decimal):
+def decrease_user_balance(*, account: Account, amount: Decimal):
     with transaction.atomic():
         balance_change_object = BalanceChange.objects.create(
-            account_id=account_pk,
+            account_id=account,
             amount=amount,
             is_accepted=True,
             operation_type='WITHDRAW',
         )
 
         Account.withdraw(
-            pk=account_pk,
+            pk=account.pk,
             amount=Decimal(amount),
         )
     rollbar.report_message((
-        f'Withdraw {balance_change_object.amount} {settings.DEFAULT_CURRENCY} from '
-        f'user account {balance_change_object.account_id}'
+        f'Withdraw {balance_change_object.amount} {settings.DEFAULT_CURRENCY} '
+        f'from user account {balance_change_object.account_id}'
     ),
         'info',
     )
 
 
-def execute_invoice_operations(*, invoice_instance: Invoice, account_id: int):
+def execute_invoice_operations(
+        *, invoice_instance: Invoice,
+        payer_account: Account,
+        decrease_amount: Decimal,
+):
     invoice_executioner = pay_proc.InvoiceExecution(invoice_instance)
     invoice_executioner.process_invoice_transactions()
     if invoice_executioner.invoice_success_status is True:
-        # TO BE DONE: it has to put money on our account
-        # and developer account
+        # TO BE DONE: it has to put money on our shop account
         decrease_user_balance(
-            account_pk=account_id,
-            amount=invoice_instance.total_price,
+            account=payer_account,
+            amount=decrease_amount,
         )

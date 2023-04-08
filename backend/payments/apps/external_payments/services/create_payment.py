@@ -1,5 +1,7 @@
 from yookassa import Payment
 
+from apps.base.schemas import URL
+
 from .. import schemas
 from ..schemas import PaymentCreateDataClass
 
@@ -7,7 +9,7 @@ from ..schemas import PaymentCreateDataClass
 def get_yookassa_payment_url(
         payment_data: PaymentCreateDataClass,
         metadata: dict,
-) -> str:
+) -> URL:
 
     yookassa_payment_info = schemas.YookassaPaymentCreate(
         amount=schemas.AmountDataClass(
@@ -26,4 +28,4 @@ def get_yookassa_payment_url(
 
     payment = Payment.create(yookassa_payment_info.to_dict())
 
-    return payment.confirmation.confirmation_url
+    return URL(payment.confirmation.confirmation_url)

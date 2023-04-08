@@ -34,7 +34,6 @@ class PaymentAcceptanceView(CreateAPIView):
                 f'Schemas and serializers got different structure. Got next error: {str(error)}',
                 'error',
             )
-            print(error)
             return Response(200)
 
         if PaymentAcceptance(yookassa_data).payment_status is True:
