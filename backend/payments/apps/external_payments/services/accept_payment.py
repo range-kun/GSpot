@@ -1,9 +1,8 @@
 from decimal import Decimal
 
 import rollbar
-from django.conf import settings
-from django.db import transaction
 
+from apps.base import utils
 from apps.external_payments.schemas import (PaymentResponseStatuses,
                                             YookassaPaymentResponse)
 from apps.payment_accounts.models import Account, BalanceChange
@@ -12,7 +11,6 @@ from apps.payment_accounts.services.payment_commission import \
 from apps.transactions.models import Invoice
 
 from . import invoice_execution as pay_proc
-from .utils import parse_model_instance
 
 
 class YookassaIncomePayment:
@@ -64,7 +62,7 @@ class PaymentAcceptance(YookassaIncomePayment):
             )
 
     def parse_user_account(self):
-        return parse_model_instance(
+        return utils.parse_model_instance(
             django_model=Account,
             error_message=(
                 f"Can't get user account instance for user id {self.account_id}"
@@ -79,7 +77,7 @@ class BalanceChangeHandler(YookassaIncomePayment):
         self.balance_change_object = self._parse_balance_object()
 
     def _parse_balance_object(self) -> BalanceChange | None:
-        return parse_model_instance(
+        return utils.parse_model_instance(
             django_model=BalanceChange,
             error_message=(
                 f"Can't get payment instance for payment id {self.payment_body.id_}"
@@ -92,7 +90,7 @@ class BalanceChangeHandler(YookassaIncomePayment):
             return
 
         if self.yookassa_payment_status == PaymentResponseStatuses.succeeded:
-            increase_user_balance(
+            utils.increase_user_balance(
                 balance_change_object=self.balance_change_object,
                 amount=Decimal(self.income_value),
             )
@@ -118,7 +116,7 @@ class IncomeInvoiceHandler(YookassaIncomePayment):
         return True
 
     def _parse_invoice_object(self) -> Invoice:
-        return parse_model_instance(
+        return utils.parse_model_instance(
             django_model=Invoice,
             error_message=f"Can't get invoice instance for payment id {self.payment_body.id_}",
             pk=self.payment_body.metadata['invoice_id'],
@@ -155,49 +153,6 @@ class IncomeInvoiceHandler(YookassaIncomePayment):
         return True
 
 
-def increase_user_balance(
-        *,
-        balance_change_object: BalanceChange,
-        amount: Decimal,
-) -> None:
-    with transaction.atomic():
-        balance_change_object.is_accepted = True
-        balance_change_object.amount = amount
-        balance_change_object.save()
-
-        Account.deposit(
-            pk=balance_change_object.account_id.pk,
-            amount=Decimal(amount),
-        )
-    rollbar.report_message((
-        f'Deposit {balance_change_object.amount} {settings.DEFAULT_CURRENCY} '
-        f'to user account {balance_change_object.account_id}'
-    ),
-        'info',
-    )
-
-
-def decrease_user_balance(*, account: Account, amount: Decimal):
-    with transaction.atomic():
-        balance_change_object = BalanceChange.objects.create(
-            account_id=account,
-            amount=amount,
-            is_accepted=True,
-            operation_type='WITHDRAW',
-        )
-
-        Account.withdraw(
-            pk=account.pk,
-            amount=Decimal(amount),
-        )
-    rollbar.report_message((
-        f'Withdraw {balance_change_object.amount} {settings.DEFAULT_CURRENCY} '
-        f'from user account {balance_change_object.account_id}'
-    ),
-        'info',
-    )
-
-
 def execute_invoice_operations(
         *, invoice_instance: Invoice,
         payer_account: Account,
@@ -207,7 +162,7 @@ def execute_invoice_operations(
     invoice_executioner.process_invoice_transactions()
     if invoice_executioner.invoice_success_status is True:
         # TO BE DONE: it has to put money on our shop account
-        decrease_user_balance(
+        utils.decrease_user_balance(
             account=payer_account,
             amount=decrease_amount,
         )

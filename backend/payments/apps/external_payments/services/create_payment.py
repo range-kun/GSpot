@@ -3,11 +3,10 @@ from yookassa import Payment
 from apps.base.schemas import URL
 
 from .. import schemas
-from ..schemas import PaymentCreateDataClass
 
 
 def get_yookassa_payment_url(
-        payment_data: PaymentCreateDataClass,
+        payment_data: schemas.PaymentCreateDataClass,
         metadata: dict,
 ) -> URL:
 
