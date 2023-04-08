@@ -5,7 +5,7 @@ from rest_framework.response import Response
 
 from .schemas import YookassaPaymentResponse
 from .serializers import YookassaPaymentAcceptanceSerializer
-from .services.accept_payment import yookassa_payment_acceptance
+from .services.accept_payment import PaymentAcceptance
 
 
 class PaymentAcceptanceView(CreateAPIView):
@@ -37,6 +37,6 @@ class PaymentAcceptanceView(CreateAPIView):
             print(error)
             return Response(200)
 
-        if yookassa_payment_acceptance(yookassa_data):
+        if PaymentAcceptance(yookassa_data).payment_status is True:
             return Response(200)
         return Response(404)

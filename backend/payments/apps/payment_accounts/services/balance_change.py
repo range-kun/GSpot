@@ -2,7 +2,9 @@ from environs import Env
 from yookassa import Configuration
 
 from apps.external_payments.schemas import PaymentCreateDataClass
-from apps.external_payments.services.create_payment import get_yookassa_payment_url
+from apps.external_payments.services.create_payment import \
+    get_yookassa_payment_url
+
 from ..models import Account, BalanceChange
 
 env = Env()
