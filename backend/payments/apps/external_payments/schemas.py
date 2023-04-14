@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from uuid import UUID
 
-from apps.base.schemas import URL
+from apps.base.schemas import URL, PaymentServiceInfo, PaymentTypes
 from dataclasses_json import config, dataclass_json
 from django.conf import settings
 
@@ -13,14 +13,6 @@ class PaymentResponseStatuses(enum.Enum):
     canceled = 'payment.canceled'
     waiting_for_capture = 'payment.waiting_for_capture'
     refund_succeeded = 'refund.succeeded'
-
-
-class PaymentTypes(enum.Enum):
-    bank_card = 'bank_card'
-    yoo_money = 'yoo_money'
-    sberbank = 'sberbank'
-    qiwi = 'qiwi'
-    from_balance = 'from_balance'
 
 
 @dataclass
@@ -83,13 +75,17 @@ class YookassaPaymentCreate:
     description: str | None = None
 
 
-@dataclass
-class YookassaPaymentInfo:
-    payment_type: PaymentTypes
+@dataclass(kw_only=True)
+class CommissionCalculationInfo(PaymentServiceInfo):
     payment_amount: Decimal
 
 
-@dataclass
-class PaymentCreateDataClass(YookassaPaymentInfo):
+@dataclass(kw_only=True)
+class BalanceIncreaseData(CommissionCalculationInfo):
     user_uuid: UUID
     return_url: URL
+
+
+@dataclass(kw_only=True)
+class YookassaRequestPayment(BalanceIncreaseData):
+    metadata: dict
