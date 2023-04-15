@@ -3,12 +3,14 @@ from dacite import MissingValueError, from_dict
 from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
 
+from apps.base.schemas import PaymentServices
+
 from .schemas import YookassaPaymentResponse
 from .serializers import YookassaPaymentAcceptanceSerializer
-from .services.accept_payment import PaymentAcceptance
+from .services.accept_payment import proceed_payment_response
 
 
-class PaymentAcceptanceView(CreateAPIView):
+class YookassaPaymentAcceptanceView(CreateAPIView):
     serializer_class = YookassaPaymentAcceptanceSerializer
 
     def post(self, request, *args, **kwargs):
@@ -35,7 +37,10 @@ class PaymentAcceptanceView(CreateAPIView):
                 'error',
             )
             return Response(200)
-
-        if PaymentAcceptance(yookassa_data).payment_status is True:
+        payment_status = proceed_payment_response(
+            yookassa_data,
+            PaymentServices.yookassa,
+        )
+        if payment_status is True:
             return Response(200)
         return Response(404)

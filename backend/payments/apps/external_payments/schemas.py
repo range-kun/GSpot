@@ -3,12 +3,13 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from uuid import UUID
 
-from apps.base.schemas import URL, PaymentServiceInfo, PaymentTypes
 from dataclasses_json import config, dataclass_json
 from django.conf import settings
 
+from apps.base.schemas import URL, PaymentServiceInfo, PaymentTypes
 
-class PaymentResponseStatuses(enum.Enum):
+
+class YookassaPaymentStatuses(enum.Enum):
     succeeded = 'payment.succeeded'
     canceled = 'payment.canceled'
     waiting_for_capture = 'payment.waiting_for_capture'
@@ -29,7 +30,7 @@ class PaymentMethodDataResponse:
 
 @dataclass_json
 @dataclass
-class YookassaPaymentResponseObject:
+class YookassaPaymentBody:
     id_: UUID = field(metadata=config(field_name='id'))
     income_amount: AmountDataClass
     amount: AmountDataClass
@@ -41,8 +42,8 @@ class YookassaPaymentResponseObject:
 @dataclass_json
 @dataclass
 class YookassaPaymentResponse:
-    event: PaymentResponseStatuses
-    object_: YookassaPaymentResponseObject = field(
+    event: YookassaPaymentStatuses
+    object_: YookassaPaymentBody = field(
         metadata=config(field_name='object'),
     )
 

@@ -1,8 +1,7 @@
 from apps.base.schemas import URL, PaymentServices
 from apps.external_payments import schemas
-from apps.external_payments.services.payment_serivces.yookassa_payment import (
-    YookassaPayment,
-)
+from apps.external_payments.services.payment_serivces.yookassa_payment import \
+    YookassaPayment
 
 from ..models import Account, BalanceChange
 

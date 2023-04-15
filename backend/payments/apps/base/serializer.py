@@ -1,6 +1,7 @@
-from apps.base.schemas import PaymentServices, PaymentTypes
 from rest_enumfield import EnumField
 from rest_framework import serializers
+
+from apps.base.schemas import PaymentServices, PaymentTypes
 
 
 class PaymentServiceSerializer(serializers.Serializer):

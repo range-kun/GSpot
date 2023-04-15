@@ -11,9 +11,13 @@ class AbstractPaymentClass(ABC):
         pass
 
     @abstractmethod
-    def parse_income_data(self, payment_response):
+    def handel_payment_response(self, payment_response):
         pass
 
     @abstractmethod
-    def validate_income_data(self, balance_object, invoice_object: None = None):
+    def parse_income_data(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def validate_income_data(self, parsed_data):
         pass

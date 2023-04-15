@@ -1,9 +1,10 @@
-from apps.base.fields import MoneySerializerField
 from rest_enumfield import EnumField
 from rest_framework import serializers
 
+from apps.base.fields import MoneySerializerField
+
 from ..base.schemas import PaymentTypes
-from .schemas import PaymentResponseStatuses
+from .schemas import YookassaPaymentStatuses
 
 
 class BaseSerializer(serializers.Serializer):
@@ -54,5 +55,5 @@ class YookassaPaymentBodySerializer(serializers.Serializer):
 
 
 class YookassaPaymentAcceptanceSerializer(BaseSerializer):
-    event = EnumField(choices=PaymentResponseStatuses)
+    event = EnumField(choices=YookassaPaymentStatuses)
     object_ = YookassaPaymentBodySerializer()
