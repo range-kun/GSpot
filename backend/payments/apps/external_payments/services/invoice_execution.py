@@ -65,6 +65,7 @@ def execute_invoice_operations(
     invoice_executioner.process_invoice_transactions()
     if invoice_executioner.invoice_success_status is True:
         # TO BE DONE: it has to put money on our shop account
+        # And developer account
         utils.decrease_user_balance(
             account=payer_account,
             amount=decrease_amount,

@@ -19,6 +19,7 @@ class PaymentTypes(enum.Enum):
     yoo_money = 'yoo_money'
     sberbank = 'sberbank'
     qiwi = 'qiwi'
+    from_balance = 'from_balance'
 
 
 @dataclass(kw_only=True)

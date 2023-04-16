@@ -3,6 +3,7 @@ from dataclasses import asdict
 import rollbar
 from yookassa import Payment
 
+import apps.payment_accounts.schemas
 from apps.base import utils
 from apps.base.classes import AbstractPaymentClass
 from apps.base.schemas import URL, ResponseParsedData
@@ -24,7 +25,7 @@ class YookassaPayment(AbstractPaymentClass):
 
     def request_balance_deposit_url(
             self,
-            payment_data: schemas.YookassaRequestPayment,
+            payment_data: apps.payment_accounts.schemas.YookassaRequestPayment,
     ) -> URL:
         yookassa_payment_info = schemas.YookassaPaymentCreate(
             amount=schemas.AmountDataClass(
@@ -47,15 +48,15 @@ class YookassaPayment(AbstractPaymentClass):
 
     @staticmethod
     def create_balance_increase_data(
-            balance_increase_data: schemas.BalanceIncreaseData,
+            balance_increase_data: apps.payment_accounts.schemas.BalanceIncreaseData,
             user_account: Account,
             balance_change: BalanceChange,
-    ) -> schemas.YookassaRequestPayment:
+    ) -> apps.payment_accounts.schemas.YookassaRequestPayment:
         metadata = {
             'account_id': user_account.pk,
             'balance_change_id': balance_change.pk,
         }
-        return schemas.YookassaRequestPayment(
+        return apps.payment_accounts.schemas.YookassaRequestPayment(
             **asdict(balance_increase_data),
             metadata=metadata,
         )
@@ -66,14 +67,14 @@ class YookassaPayment(AbstractPaymentClass):
             user_account: Account,
             balance_change: BalanceChange,
             invoice_instance: Invoice,
-    ) -> schemas.YookassaRequestPayment:
+    ) -> apps.payment_accounts.schemas.YookassaRequestPayment:
         metadata = {
             'account_id': user_account.pk,
             'balance_change_id': balance_change.pk,
             'invoice_id': str(invoice_instance.invoice_id),
         }
 
-        return schemas.YookassaRequestPayment(
+        return apps.payment_accounts.schemas.YookassaRequestPayment(
             payment_amount=invoice_instance.total_price,
             payment_service=purchase_items_data.payment_service,
             payment_type=purchase_items_data.payment_type,
@@ -90,7 +91,7 @@ class YookassaPayment(AbstractPaymentClass):
 
         if parsed_data is None:
             return
-        if self.yookassa_response.event == schemas.YookassaPaymentStatuses.canceled.value:
+        if self.yookassa_response.event == schemas.YookassaPaymentStatuses.canceled:
             parsed_data.balance_object.delete()
             return
 
@@ -112,7 +113,10 @@ class YookassaPayment(AbstractPaymentClass):
 
 
 class YookassaResponseParser:
-    def __init__(self, yookassa_response: schemas.YookassaPaymentResponse | None = None):
+    def __init__(
+            self,
+            yookassa_response: schemas.YookassaPaymentResponse | None = None,
+    ):
         self.yookassa_response = yookassa_response
         self.payment_body = yookassa_response.object_
         self.payment_event = self.yookassa_response.event
@@ -161,7 +165,9 @@ class YookassaResponseParser:
         )
 
     @staticmethod
-    def _parse_invoice_object(payment_body: schemas.YookassaPaymentBody) -> Invoice:
+    def _parse_invoice_object(
+            payment_body: schemas.YookassaPaymentBody,
+    ) -> Invoice:
         return utils.parse_model_instance(
             django_model=Invoice,
             error_message=f"Can't get invoice instance for payment id {payment_body.id_}",

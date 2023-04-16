@@ -6,7 +6,7 @@ from uuid import UUID
 from dataclasses_json import config, dataclass_json
 from django.conf import settings
 
-from apps.base.schemas import URL, PaymentServiceInfo, PaymentTypes
+from apps.base.schemas import URL, PaymentTypes
 
 
 class YookassaPaymentStatuses(enum.Enum):
@@ -74,19 +74,3 @@ class YookassaPaymentCreate:
     capture: bool = True
     refundable: bool = False
     description: str | None = None
-
-
-@dataclass(kw_only=True)
-class CommissionCalculationInfo(PaymentServiceInfo):
-    payment_amount: Decimal
-
-
-@dataclass(kw_only=True)
-class BalanceIncreaseData(CommissionCalculationInfo):
-    user_uuid: UUID
-    return_url: URL
-
-
-@dataclass(kw_only=True)
-class YookassaRequestPayment(BalanceIncreaseData):
-    metadata: dict

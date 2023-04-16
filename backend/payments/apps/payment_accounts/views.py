@@ -3,10 +3,8 @@ from rest_framework import status
 from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
 
-from apps.external_payments.schemas import (BalanceIncreaseData,
-                                            CommissionCalculationInfo)
-
 from . import serializers
+from .schemas import BalanceIncreaseData, CommissionCalculationInfo
 from .services.balance_change import request_balance_deposit_url
 from .services.payment_commission import calculate_payment_with_commission
 

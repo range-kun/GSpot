@@ -11,7 +11,7 @@ class AbstractPaymentClass(ABC):
         pass
 
     @abstractmethod
-    def handel_payment_response(self, payment_response):
+    def handel_payment_response(self):
         pass
 
     @abstractmethod
