@@ -24,7 +24,7 @@ class MoneyField(DecimalField):
 class MoneySerializerField(serializers.DecimalField):
     def __init__(
         self,
-        min_value=0,
+        min_value=500,
         max_digits=settings.MAX_BALANCE_DIGITS,
         decimal_places=2,
         **kwargs,

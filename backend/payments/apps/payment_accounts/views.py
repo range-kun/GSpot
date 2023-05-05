@@ -1,12 +1,22 @@
 import rollbar
-from rest_framework import status
+from apps.external_payments.schemas import YookassaPayoutModel
+from apps.external_payments.services.payment_serivces.yookassa_payment import (
+    YookassaPayOut,
+)
+from rest_framework import status, viewsets
 from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
 
 from . import serializers
+from .exceptions import (
+    InsufficientFundsError,
+    NotPayoutDayError,
+    PayOutLimitExceededError,
+)
 from .schemas import BalanceIncreaseData, CommissionCalculationInfo
 from .services.balance_change import request_balance_deposit_url
 from .services.payment_commission import calculate_payment_with_commission
+from .services.payout import PrePayoutProcessor
 
 
 class CalculatePaymentCommissionView(CreateAPIView):
@@ -58,3 +68,17 @@ class BalanceIncreaseView(CreateAPIView):
 
 class UserAccountAPIView(CreateAPIView):
     serializer_class = serializers.AccountSerializer
+
+
+class PayoutView(viewsets.GenericViewSet):
+    serializer_class = serializers.PayoutSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        pre_payout_processor = PrePayoutProcessor(serializer.validated_data)
+        try:
+            pre_payout_processor.validate_payout(YookassaPayoutModel)
+        except (NotPayoutDayError, InsufficientFundsError, PayOutLimitExceededError) as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        YookassaPayOut.request_payout(pre_payout_processor.payout_model_data)

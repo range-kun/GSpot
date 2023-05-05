@@ -1,13 +1,9 @@
 from abc import ABC, abstractmethod
 
 
-class AbstractPaymentClass(ABC):
+class AbstractPaymentService(ABC):
     @abstractmethod
     def request_balance_deposit_url(self, payment_data):
-        pass
-
-    @abstractmethod
-    def request_balance_withdraw_url(self, payment_data):
         pass
 
     @abstractmethod

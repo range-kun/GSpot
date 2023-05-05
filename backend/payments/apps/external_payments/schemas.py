@@ -6,6 +6,7 @@ from uuid import UUID
 from apps.base.schemas import URL, PaymentTypes
 from dataclasses_json import config, dataclass_json
 from django.conf import settings
+from pydantic import BaseModel, Field
 
 
 class YookassaPaymentStatuses(enum.Enum):
@@ -73,3 +74,26 @@ class YookassaPaymentCreate:
     capture: bool = True
     refundable: bool = False
     description: str | None = None
+
+
+class AmountModel(BaseModel):
+    value: Decimal
+    currency: str = settings.DEFAULT_CURRENCY
+
+
+class PayOutMethod(enum.Enum):
+    yoo_money = 'yoo_money'
+    bank_card = 'bank_card'
+
+
+class PayoutDestination(BaseModel):
+    type_: PayOutMethod = Field(
+        alias='type',
+        default=PayOutMethod.yoo_money,
+    )
+    account_number: int
+
+
+class YookassaPayoutModel(BaseModel):
+    amount: AmountModel
+    payout_destination: PayoutDestination

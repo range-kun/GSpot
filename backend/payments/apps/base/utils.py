@@ -3,10 +3,12 @@ from typing import TypeVar
 
 import rollbar
 from apps.payment_accounts.models import Account, BalanceChange
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.db.models import Model
+from django.db.models import Model, Q
+from django.utils import timezone
 
 DjangoModel = TypeVar('DjangoModel', bound=Model)
 
@@ -69,3 +71,14 @@ def decrease_user_balance(*, account: Account, amount: Decimal):
         ),
         'info',
     )
+
+
+def get_payout_amount_for_last_month(developer_account: Account) -> int:
+    start_date = timezone.now() - relativedelta(months=1)
+
+    return BalanceChange.objects.filter(
+        Q(account_id=developer_account)
+        & Q(is_accepted=True)
+        & Q(operation_type=BalanceChange.ItemPurchaseType.WITHDRAW.name)
+        & Q(date_time_creation__gte=start_date),
+    ).count()

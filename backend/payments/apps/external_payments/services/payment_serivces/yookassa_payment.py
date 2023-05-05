@@ -2,7 +2,7 @@ from dataclasses import asdict
 
 import rollbar
 from apps.base import utils
-from apps.base.classes import AbstractPaymentClass
+from apps.base.classes import AbstractPaymentService
 from apps.base.schemas import URL, ResponseParsedData
 from apps.external_payments import schemas
 from apps.item_purchases.models import Invoice
@@ -13,15 +13,16 @@ from apps.payment_accounts.services.payment_commission import (
     calculate_payment_without_commission,
 )
 from environs import Env
-from yookassa import Configuration, Payment
+from yookassa import Configuration, Payment, Payout
 
 env = Env()
 env.read_env()
-Configuration.account_id = env.int('SHOP_ACCOUNT_ID')
-Configuration.secret_key = env.str('SHOP_SECRET_KEY')
 
 
-class YookassaPayment(AbstractPaymentClass):
+class YookassaService(AbstractPaymentService):
+    Configuration.account_id = env.int('SHOP_ACCOUNT_ID')
+    Configuration.secret_key = env.str('SHOP_SECRET_KEY')
+
     def __init__(
         self,
         yookassa_response: schemas.YookassaPaymentResponse | None = None,
@@ -89,9 +90,6 @@ class YookassaPayment(AbstractPaymentClass):
             metadata=metadata,
         )
 
-    def request_balance_withdraw_url(self, payment_data):
-        pass
-
     def handel_payment_response(self) -> ResponseParsedData | None:
         parsed_data = self.parse_income_data()
 
@@ -116,6 +114,23 @@ class YookassaPayment(AbstractPaymentClass):
             yookassa_response=self.yookassa_response,
         )
         return self.invoice_validator.is_invoice_valid()
+
+
+class YookassaPayOut:
+    # Configuration.account_id = 503787
+    # Configuration.secret_key = "test_*geD0_gaiJsE3N5Dm-F9YE27f8VjQuOg7r0SIQO_zxiJw"
+    @staticmethod
+    def request_payout(payout_data) -> URL:
+        res = Payout.create(payout_data)
+        res = Payout.create(
+            {
+                'amount': {'value': '320.00', 'currency': 'RUB'},
+                'payout_destination': {'type': 'yoo_money', 'account_number': '4100116075156746'},
+                'description': 'Выплата по заказу №37',
+                'metadata': {'order_id': '37'},
+            },
+        )
+        return res
 
 
 class YookassaResponseParser:
