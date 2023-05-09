@@ -81,7 +81,7 @@ class PayOutValidator:
         )
 
     def _is_enough_funds(self) -> bool:
-        return self.developer_account.balance > self.payout_model_data.amount.value
+        return self.developer_account.balance.amount > self.payout_model_data.amount.value
 
     def _is_payout_method_supported(self) -> bool:
         return self.payout_model_data.payout_destination_data.type_ == PayOutMethod.yoo_money
