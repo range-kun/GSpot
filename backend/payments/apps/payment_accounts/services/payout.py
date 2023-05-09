@@ -10,10 +10,11 @@ from apps.payment_accounts.exceptions import (
     NotValidAccountNumberError,
     PayOutLimitExceededError,
 )
-from apps.payment_accounts.models import Account, BalanceChange
+from apps.payment_accounts.models import Account, BalanceChange, Owner
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from yookassa.domain.exceptions import BadRequestError
+from yookassa.domain.response import PayoutResponse
 
 
 class PayoutProcessor:
@@ -25,11 +26,11 @@ class PayoutProcessor:
         )
         self.payout_model_data = YookassaPayoutModel(**self.payout_data)
 
-    def create_payout(self):
+    def create_payout(self) -> PayoutResponse | None:
         PayOutValidator(self.payout_model_data, self.developer_account).validate_payout()
-        self._request_service_payout()
+        return self._request_service_payout()
 
-    def _request_service_payout(self):
+    def _request_service_payout(self) -> PayoutResponse | None:
         balance_change_object = BalanceChange.objects.create(
             account_id=self.developer_account,
             amount=self.payout_model_data.amount.value,
@@ -51,8 +52,9 @@ class PayOutValidator:
         self.developer_account = developer_account
 
     def validate_payout(self) -> None:
-        if not self._is_it_payout_date():
-            raise NotPayoutDayError(f'The payout day is {settings.PAYOUT_DAY_OF_MONTH}')
+        owner = Owner.objects.get(pk=1)
+        if not self._is_it_payout_date(owner.payout_day_of_month):
+            raise NotPayoutDayError(f'The payout day is {owner.payout_day_of_month}')
 
         if self._is_payout_limit_exceeded(self.developer_account):
             raise PayOutLimitExceededError(
@@ -69,17 +71,17 @@ class PayOutValidator:
             raise NotImplementedError('Currently we only able to proceed yoo_money payout')
 
     @staticmethod
-    def _is_it_payout_date():
-        return datetime.datetime.today().day == settings.PAYOUT_DAY_OF_MONTH
+    def _is_it_payout_date(payout_day_of_month: int) -> bool:
+        return datetime.datetime.today().day == payout_day_of_month
 
-    def _is_payout_limit_exceeded(self, developer_account: Account):
+    def _is_payout_limit_exceeded(self, developer_account: Account) -> bool:
         return (
             BalanceChange.objects.get_payout_amount_for_last_month(developer_account)
             >= settings.MAXIMUM_PAYOUTS_PER_MONTH
         )
 
-    def _is_enough_funds(self):
+    def _is_enough_funds(self) -> bool:
         return self.developer_account.balance > self.payout_model_data.amount.value
 
-    def _is_payout_method_supported(self):
+    def _is_payout_method_supported(self) -> bool:
         return self.payout_model_data.payout_destination_data.type_ == PayOutMethod.yoo_money

@@ -4,6 +4,7 @@ from apps.base.fields import CommissionField, MoneyField
 from apps.base.utils.classmethod import OperationType, add_change_balance_method
 from apps.payment_accounts.managers import BalanceChangeManager
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.http import HttpResponseServerError
@@ -97,6 +98,7 @@ class Owner(models.Model):
     )
     frozen_time = models.DurationField()
     gift_time = models.DurationField()
+    payout_day_of_month = models.IntegerField()
 
     @classmethod
     def deposit_revenue(cls, pk, amount) -> Owner | HttpResponseServerError:
@@ -137,6 +139,11 @@ class Owner(models.Model):
             amount=amount,
             operation_type=OperationType.WITHDRAW,
         )
+
+    def save(self, *args, **kwargs):
+        if not self.pk and Owner.objects.exists():
+            raise ValidationError('There is can be only one Owner instance')
+        return super(Owner, self).save(*args, **kwargs)
 
     def __str__(self) -> str:
         return (
