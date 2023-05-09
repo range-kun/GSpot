@@ -4,7 +4,7 @@ from apps.base.schemas import PaymentServices
 from apps.base.utils import change_balance
 
 from .invoice_execution import execute_invoice_operations
-from .payment_serivces.yookassa_payment import YookassaService
+from .payment_serivces.yookassa_service import YookassaService
 
 
 def proceed_payment_response(income_data, payment_service: PaymentServices) -> bool:

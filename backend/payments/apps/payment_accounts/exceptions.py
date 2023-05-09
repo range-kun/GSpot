@@ -8,3 +8,7 @@ class NotPayoutDayError(Exception):
 
 class PayOutLimitExceededError(Exception):
     pass
+
+
+class NotValidAccountNumberError(Exception):
+    pass

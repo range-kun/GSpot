@@ -1,6 +1,6 @@
 from apps.base.schemas import URL, PaymentServices
 from apps.external_payments.services.invoice_execution import execute_invoice_operations
-from apps.external_payments.services.payment_serivces.yookassa_payment import (
+from apps.external_payments.services.payment_serivces.yookassa_service import (
     YookassaService,
 )
 from apps.payment_accounts.models import Account, BalanceChange
@@ -39,7 +39,7 @@ def request_purchase_items(
     balance_change = BalanceChange.objects.create(
         account_id=user_account,
         is_accepted=False,
-        operation_type='DEPOSIT',
+        operation_type=BalanceChange.OperationType.DEPOSIT,
     )
 
     if purchase_items_data.payment_service == PaymentServices.yookassa:

@@ -1,11 +1,12 @@
 from apps.base.fields import MoneySerializerField
+from apps.base.schemas import EnumCurrencies
 from apps.base.serializer import PaymentServiceSerializer
+from apps.external_payments.schemas import PayOutMethod
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from rest_enumfield import EnumField
 from rest_framework import serializers
 
-from ..external_payments.schemas import PayOutMethod
 from .models import Account
 
 
@@ -49,7 +50,7 @@ class AmountPayoutSerializer(serializers.Serializer):
             ),
         ],
     )
-    currency = serializers.CharField(max_length=3)
+    currency = EnumField(choices=EnumCurrencies)
 
 
 class PayoutDestination(serializers.Serializer):
@@ -65,5 +66,5 @@ class PayoutDestination(serializers.Serializer):
 
 class PayoutSerializer(serializers.Serializer):
     amount = AmountPayoutSerializer()
-    payout_destination = PayoutDestination()
+    payout_destination_data = PayoutDestination()
     user_uuid = serializers.UUIDField()

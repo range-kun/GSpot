@@ -17,3 +17,9 @@ class AbstractPaymentService(ABC):
     @abstractmethod
     def validate_income_data(self, parsed_data):
         pass
+
+
+class AbstractPayoutService(ABC):
+    @abstractmethod
+    def request_payout(self, payout_data):
+        pass

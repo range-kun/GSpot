@@ -1,8 +1,4 @@
 import rollbar
-from apps.external_payments.schemas import YookassaPayoutModel
-from apps.external_payments.services.payment_serivces.yookassa_payment import (
-    YookassaPayOut,
-)
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
 from rest_framework.generics import CreateAPIView
@@ -12,13 +8,14 @@ from . import serializers
 from .exceptions import (
     InsufficientFundsError,
     NotPayoutDayError,
+    NotValidAccountNumberError,
     PayOutLimitExceededError,
 )
 from .models import Account
 from .schemas import BalanceIncreaseData, CommissionCalculationInfo
 from .services.balance_change import request_balance_deposit_url
 from .services.payment_commission import calculate_payment_with_commission
-from .services.payout import PrePayoutProcessor
+from .services.payout import PayoutProcessor
 
 
 class CalculatePaymentCommissionView(CreateAPIView):
@@ -79,15 +76,22 @@ class AccountBalanceViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
 
-class PayoutView(viewsets.GenericViewSet):
+class PayoutView(viewsets.ViewSet):
     serializer_class = serializers.PayoutSerializer
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        pre_payout_processor = PrePayoutProcessor(serializer.validated_data)
+        pre_payout_processor = PayoutProcessor(serializer.validated_data)
         try:
-            pre_payout_processor.validate_payout(YookassaPayoutModel)
-        except (NotPayoutDayError, InsufficientFundsError, PayOutLimitExceededError) as e:
+            response = pre_payout_processor.create_payout()
+        except (
+            NotPayoutDayError,
+            InsufficientFundsError,
+            PayOutLimitExceededError,
+            NotImplementedError,
+            NotValidAccountNumberError,
+        ) as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        YookassaPayOut.request_payout(pre_payout_processor.payout_model_data)
+
+        return Response({'payout status': response})

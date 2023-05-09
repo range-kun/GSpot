@@ -1,10 +1,11 @@
 from dataclasses import asdict
 
 import rollbar
-from apps.base.classes import AbstractPaymentService
+from apps.base.classes import AbstractPaymentService, AbstractPayoutService
 from apps.base.schemas import URL, ResponseParsedData
 from apps.base.utils import change_balance
 from apps.external_payments import schemas
+from apps.external_payments.schemas import PayOutMethod, YookassaPayoutModel
 from apps.item_purchases.models import Invoice
 from apps.item_purchases.schemas import PurchaseItemsData
 from apps.payment_accounts.models import Account, BalanceChange
@@ -14,6 +15,7 @@ from apps.payment_accounts.services.payment_commission import (
 )
 from environs import Env
 from yookassa import Configuration, Payment, Payout
+from yookassa.domain.response import PayoutResponse
 
 env = Env()
 env.read_env()
@@ -115,23 +117,34 @@ class YookassaService(AbstractPaymentService):
         return self.invoice_validator.is_invoice_valid()
 
 
-class YookassaPayOut:
+class YookassaPayOut(AbstractPayoutService):
     def __init__(self):
-        Configuration.account_id = 503787
-        Configuration.secret_key = 'test_*geD0_gaiJsE3N5Dm-F9YE27f8VjQuOg7r0SIQO_zxiJw'
+        Configuration.account_id = env.int('GATE_AWAY_ACCOUNT_ID')
+        Configuration.secret_key = env.str('GATE_AWAY_SECRET_KEY')
+
+    def request_payout(self, payout_data: dict) -> PayoutResponse:
+        res = Payout.create(payout_data)
+        return res
 
     @staticmethod
-    def request_payout(payout_data) -> URL:
-        res = Payout.create(payout_data)
-        # res = Payout.create(
-        #     {
-        #         'amount': {'value': '320.00', 'currency': 'RUB'},
-        #         'payout_destination': {'type': 'yoo_money', 'account_number': '4100116075156746'},
-        #         'description': 'Выплата по заказу №37',
-        #         'metadata': {'order_id': '37'},
-        #     },
-        # )
-        return res
+    def create_payout_data(payout_data: YookassaPayoutModel, developer_account: Account):
+        response = {
+            'amount': {
+                'value': payout_data.amount.value,
+                'currency': payout_data.amount.currency.value,
+            },
+            'description': f'Выплата для {developer_account.user_uuid}',
+        }
+        if payout_data.payout_destination_data.type_ == PayOutMethod.yoo_money:
+            response['payout_destination_data'] = {
+                'type': payout_data.payout_destination_data.type_.value,
+                'account_number': payout_data.payout_destination_data.account_number,
+            }
+            return response
+        elif payout_data.payout_destination_data.type_ == PayOutMethod.bank_card:
+            pass
+        else:
+            raise NotImplementedError('Not supported payout type')
 
 
 class YookassaResponseParser:
