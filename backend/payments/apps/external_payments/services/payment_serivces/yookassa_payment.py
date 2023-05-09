@@ -1,9 +1,9 @@
 from dataclasses import asdict
 
 import rollbar
-from apps.base import utils
 from apps.base.classes import AbstractPaymentService
 from apps.base.schemas import URL, ResponseParsedData
+from apps.base.utils import change_balance
 from apps.external_payments import schemas
 from apps.item_purchases.models import Invoice
 from apps.item_purchases.schemas import PurchaseItemsData
@@ -20,13 +20,12 @@ env.read_env()
 
 
 class YookassaService(AbstractPaymentService):
-    Configuration.account_id = env.int('SHOP_ACCOUNT_ID')
-    Configuration.secret_key = env.str('SHOP_SECRET_KEY')
-
     def __init__(
         self,
         yookassa_response: schemas.YookassaPaymentResponse | None = None,
     ):
+        Configuration.account_id = env.int('SHOP_ACCOUNT_ID')
+        Configuration.secret_key = env.str('SHOP_SECRET_KEY')
         self.yookassa_response = yookassa_response
         self.invoice_validator: InvoiceValidator | None = None
 
@@ -117,19 +116,21 @@ class YookassaService(AbstractPaymentService):
 
 
 class YookassaPayOut:
-    # Configuration.account_id = 503787
-    # Configuration.secret_key = "test_*geD0_gaiJsE3N5Dm-F9YE27f8VjQuOg7r0SIQO_zxiJw"
+    def __init__(self):
+        Configuration.account_id = 503787
+        Configuration.secret_key = 'test_*geD0_gaiJsE3N5Dm-F9YE27f8VjQuOg7r0SIQO_zxiJw'
+
     @staticmethod
     def request_payout(payout_data) -> URL:
         res = Payout.create(payout_data)
-        res = Payout.create(
-            {
-                'amount': {'value': '320.00', 'currency': 'RUB'},
-                'payout_destination': {'type': 'yoo_money', 'account_number': '4100116075156746'},
-                'description': 'Выплата по заказу №37',
-                'metadata': {'order_id': '37'},
-            },
-        )
+        # res = Payout.create(
+        #     {
+        #         'amount': {'value': '320.00', 'currency': 'RUB'},
+        #         'payout_destination': {'type': 'yoo_money', 'account_number': '4100116075156746'},
+        #         'description': 'Выплата по заказу №37',
+        #         'metadata': {'order_id': '37'},
+        #     },
+        # )
         return res
 
 
@@ -168,16 +169,16 @@ class YookassaResponseParser:
         response_data.invoice = invoice
         return response_data
 
-    def _parse_user_account(self) -> Account:
+    def _parse_user_account(self) -> Account | None:
         account_id = int(self.payment_body.metadata['account_id'])
-        return utils.parse_model_instance(
+        return change_balance.parse_model_instance(
             django_model=Account,
             error_message=f"Can't get user account instance for user id {account_id}",
             pk=account_id,
         )
 
     def _parse_balance_object(self) -> BalanceChange | None:
-        return utils.parse_model_instance(
+        return change_balance.parse_model_instance(
             django_model=BalanceChange,
             error_message=f"Can't get payment instance for payment id {self.payment_body.id_}",
             pk=int(self.payment_body.metadata['balance_change_id']),
@@ -186,8 +187,8 @@ class YookassaResponseParser:
     @staticmethod
     def _parse_invoice_object(
         payment_body: schemas.YookassaPaymentBody,
-    ) -> Invoice:
-        return utils.parse_model_instance(
+    ) -> Invoice | None:
+        return change_balance.parse_model_instance(
             django_model=Invoice,
             error_message=f"Can't get invoice instance for payment id {payment_body.id_}",
             pk=payment_body.metadata['invoice_id'],

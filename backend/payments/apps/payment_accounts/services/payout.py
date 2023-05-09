@@ -1,13 +1,12 @@
 import datetime
 from typing import TypeVar
 
-from apps.base.utils import get_payout_amount_for_last_month
 from apps.payment_accounts.exceptions import (
     InsufficientFundsError,
     NotPayoutDayError,
     PayOutLimitExceededError,
 )
-from apps.payment_accounts.models import Account
+from apps.payment_accounts.models import Account, BalanceChange
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from pydantic import BaseModel
@@ -20,7 +19,7 @@ class PrePayoutProcessor:
         self.payout_data = payout_data
         self.payout_model_data: PydanticModel | None = None
 
-    def validate_payout(self, payout_model: type[PydanticModel]) -> PydanticModel | None:
+    def validate_payout(self, payout_model: type[PydanticModel]) -> None:
         if not self._is_it_payout_date():
             raise NotPayoutDayError(f'The payout day is {settings.PAYOUT_DAY_OF_MONTH}')
 
@@ -28,9 +27,6 @@ class PrePayoutProcessor:
             Account,
             user_uuid=self.payout_data.pop('user_uuid'),
         )
-        self.set_payout_model_data(payout_model)
-        if not self._is_enough_funds(developer_account):
-            raise InsufficientFundsError('Developer has not required balance to withdraw')
         if self._is_payout_limit_exceeded(developer_account):
             raise PayOutLimitExceededError(
                 (
@@ -39,7 +35,11 @@ class PrePayoutProcessor:
                 ),
             )
 
-    def set_payout_model_data(self, payout_model: type[PydanticModel]):
+        self._set_payout_model_data(payout_model)
+        if not self._is_enough_funds(developer_account):
+            raise InsufficientFundsError('Developer has not required balance to withdraw')
+
+    def _set_payout_model_data(self, payout_model: type[PydanticModel]):
         self.payout_model_data = payout_model(**self.payout_data)
 
     @staticmethod
@@ -54,6 +54,6 @@ class PrePayoutProcessor:
 
     def _is_payout_limit_exceeded(self, developer_account: Account):
         return (
-            get_payout_amount_for_last_month(developer_account)
+            BalanceChange.objects.get_payout_amount_for_last_month(developer_account)
             >= settings.MAXIMUM_PAYOUTS_PER_MONTH
         )

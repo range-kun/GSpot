@@ -28,6 +28,14 @@ class AccountSerializer(serializers.ModelSerializer):
         fields = ('user_uuid',)
 
 
+class AccountBalanceSerializer(serializers.ModelSerializer):
+    balance = MoneySerializerField()
+
+    class Meta:
+        model = Account
+        fields = ('balance',)
+
+
 class AmountPayoutSerializer(serializers.Serializer):
     value = MoneySerializerField(
         validators=[
