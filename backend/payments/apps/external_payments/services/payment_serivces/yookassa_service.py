@@ -123,8 +123,7 @@ class YookassaPayOut(AbstractPayoutService):
         Configuration.secret_key = env.str('GATE_AWAY_SECRET_KEY')
 
     def request_payout(self, payout_data: dict) -> PayoutResponse:
-        res = Payout.create(payout_data)
-        return res
+        return Payout.create(payout_data)
 
     @staticmethod
     def create_payout_data(payout_data: YookassaPayoutModel, developer_account: Account):
@@ -142,6 +141,8 @@ class YookassaPayOut(AbstractPayoutService):
             }
             return response
         elif payout_data.payout_destination_data.type_ == PayOutMethod.bank_card:
+            # TODO add functionality to support bank card # noqa: T000
+            #  https://yookassa.ru/developers/api#payout_object
             pass
         else:
             raise NotImplementedError('Not supported payout type')

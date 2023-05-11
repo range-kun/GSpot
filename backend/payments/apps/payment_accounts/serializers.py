@@ -55,7 +55,7 @@ class AmountPayoutSerializer(serializers.Serializer):
 
 class PayoutDestination(serializers.Serializer):
     type_ = EnumField(choices=PayOutMethod)
-    account_number = serializers.IntegerField()
+    account_number = serializers.CharField()
 
     def to_internal_value(self, data):
         if 'type' in data.keys():

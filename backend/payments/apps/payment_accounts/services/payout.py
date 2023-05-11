@@ -1,6 +1,6 @@
 import datetime
 
-from apps.external_payments.schemas import PayOutMethod, YookassaPayoutModel
+from apps.external_payments.schemas import YookassaPayoutModel
 from apps.external_payments.services.payment_serivces.yookassa_service import (
     YookassaPayOut,
 )
@@ -24,6 +24,9 @@ class PayoutProcessor:
             Account,
             user_uuid=self.payout_data.pop('user_uuid'),
         )
+        # TODO add logic here to transform income bank card data to bank card token # noqa: T000
+        # https://yookassa.ru
+        # /docs/payment-solution/payouts/supplementary/collecting-data/bank-card-synonym-request
         self.payout_model_data = YookassaPayoutModel(**self.payout_data)
 
     def create_payout(self) -> PayoutResponse | None:
@@ -67,9 +70,6 @@ class PayOutValidator:
         if not self._is_enough_funds():
             raise InsufficientFundsError('Developer has not required balance to withdraw')
 
-        if not self._is_payout_method_supported():
-            raise NotImplementedError('Currently we only able to proceed yoo_money payout')
-
     @staticmethod
     def _is_it_payout_date(payout_day_of_month: int) -> bool:
         return datetime.datetime.today().day == payout_day_of_month
@@ -82,6 +82,3 @@ class PayOutValidator:
 
     def _is_enough_funds(self) -> bool:
         return self.developer_account.balance.amount > self.payout_model_data.amount.value
-
-    def _is_payout_method_supported(self) -> bool:
-        return self.payout_model_data.payout_destination_data.type_ == PayOutMethod.yoo_money
