@@ -151,3 +151,29 @@ class Owner(models.Model):
             f'Frozen time: {self.frozen_time}'
             f'Gift time: {self.gift_time}'
         )
+
+
+class Payout(models.Model):
+    class PayoutType(models.TextChoices):
+        DEBIT_CARD = ('DB', 'DEBIT_CARD')
+        YOO_MONEY = ('YM', 'YOO_MONEY')
+
+    account = models.OneToOneField(Account, blank=True, null=True, on_delete=models.CASCADE)
+    account_number = models.CharField(max_length=30)
+    is_auto_payout = models.BooleanField(default=False)
+    payout_type = models.CharField(max_length=23, choices=PayoutType.choices)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['account_number', 'payout_type'],
+                name='name of constraint',
+            ),
+        ]
+
+    def __str__(self):
+        return (
+            f'Account id: {self.account.pk} '
+            f'Account number: {self.account_number} '
+            f'Payout_type: {self.payout_type}'
+        )
