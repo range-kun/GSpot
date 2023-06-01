@@ -242,7 +242,7 @@ class YookassaPayOut(AbstractPayoutService):
                 'account_number': payout_data.payout_destination_data.account_number,
             }
             return response
-        elif payout_data.payout_destination_data.type_ == PayoutData.PayoutType.DEBIT_CARD:
+        elif payout_data.payout_destination_data.type_ == PayoutData.PayoutType.BANK_CARD:
             # TODO add functionality to support bank card # noqa: T000
             #  https://yookassa.ru/developers/api#payout_object
             pass

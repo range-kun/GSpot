@@ -156,8 +156,8 @@ class Owner(models.Model):
 
 class PayoutData(models.Model):
     class PayoutType(models.TextChoices):
-        DEBIT_CARD = (PaymentMethodType.YOO_MONEY, 'YOO_MONEY')
-        YOO_MONEY = (PaymentMethodType.BANK_CARD, 'BANK_CARD')
+        BANK_CARD = (PaymentMethodType.BANK_CARD, 'BANK_CARD')
+        YOO_MONEY = (PaymentMethodType.YOO_MONEY, 'YOO_MONEY')
 
     user_uuid = models.OneToOneField(
         Account,
