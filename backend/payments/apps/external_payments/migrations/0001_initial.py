@@ -2,21 +2,7 @@
 import apps.base.fields
 import django.core.validators
 import django.db.models.deletion
-from django.core.management import call_command
 from django.db import migrations, models
-
-
-def load_fixtures(apps, schema_editor):
-    call_command(
-        'loaddata',
-        'apps/external_payments/fixtures/services.json',
-        verbosity=0,
-    )
-    call_command(
-        'loaddata',
-        'apps/external_payments/fixtures/yookassa_commissions.json',
-        verbosity=0,
-    )
 
 
 class Migration(migrations.Migration):
@@ -115,5 +101,4 @@ class Migration(migrations.Migration):
                 ),
             ],
         ),
-        migrations.RunPython(load_fixtures),
     ]
