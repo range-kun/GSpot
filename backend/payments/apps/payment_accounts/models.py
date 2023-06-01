@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.http import HttpResponseServerError
+from yookassa.domain.common import PaymentMethodType
 
 
 class Account(models.Model):
@@ -36,7 +37,7 @@ class Account(models.Model):
         )
 
     def __str__(self) -> str:
-        return f'User id: {self.user_uuid}'
+        return f'User uuid: {self.user_uuid}'
 
 
 class BalanceChange(models.Model):
@@ -153,12 +154,19 @@ class Owner(models.Model):
         )
 
 
-class Payout(models.Model):
+class PayoutData(models.Model):
     class PayoutType(models.TextChoices):
-        DEBIT_CARD = ('DB', 'DEBIT_CARD')
-        YOO_MONEY = ('YM', 'YOO_MONEY')
+        DEBIT_CARD = (PaymentMethodType.YOO_MONEY, 'YOO_MONEY')
+        YOO_MONEY = (PaymentMethodType.BANK_CARD, 'BANK_CARD')
 
-    account = models.OneToOneField(Account, blank=True, null=True, on_delete=models.CASCADE)
+    user_uuid = models.OneToOneField(
+        Account,
+        to_field='user_uuid',
+        primary_key=True,
+        on_delete=models.CASCADE,
+        related_name='payout_data',
+        editable=False,
+    )
     account_number = models.CharField(max_length=30)
     is_auto_payout = models.BooleanField(default=False)
     payout_type = models.CharField(max_length=23, choices=PayoutType.choices)
@@ -173,7 +181,7 @@ class Payout(models.Model):
 
     def __str__(self):
         return (
-            f'Account id: {self.account.pk} '
+            f'Account id: {self.user_uuid.pk} '
             f'Account number: {self.account_number} '
             f'Payout_type: {self.payout_type}'
         )
