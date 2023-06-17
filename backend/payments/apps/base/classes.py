@@ -2,7 +2,14 @@ from abc import ABC, abstractmethod
 
 import rollbar
 from apps.base.exceptions import DifferentStructureError
+from apps.item_purchases.exceptions import RefundNotAllowedError
+from apps.item_purchases.models import ItemPurchase
+from apps.item_purchases.schemas import ItemPurchaseData
+from apps.item_purchases.services.item_purchase_completer import ItemPurchaseCompleter
 from dacite import from_dict
+from rest_framework import status
+from rest_framework.request import Request
+from rest_framework.response import Response
 
 
 class AbstractPaymentService(ABC):
@@ -51,3 +58,49 @@ class DRFtoDataClassMixin:
             )
             raise DifferentStructureError
         return data_model_data
+
+
+class ItemPurchaseStatusChanger(DRFtoDataClassMixin):
+    def update_item_purchase_status(
+        self,
+        request: Request,
+        event_type: ItemPurchase.ItemPurchaseStatus,
+    ) -> Response:
+        try:
+            item_purchase_data = self.convert_data(request, ItemPurchaseData)
+        except DifferentStructureError:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        try:
+            item_purchase = ItemPurchase.objects.get(
+                account_to__user_uuid=item_purchase_data.user_uuid,
+                item_uuid=item_purchase_data.item_uuid,
+                status=ItemPurchase.ItemPurchaseStatus.PENDING,
+            )
+        except ItemPurchase.DoesNotExist:
+            return Response(
+                {'detail': 'No such product for this user'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        data = {'item_purchase': item_purchase}
+        if event_type == ItemPurchase.ItemPurchaseStatus.PAID:
+            # PAID because this function should be called only when it's gift
+            data['is_gift'] = True
+
+        try:
+            item_purchase_processor = ItemPurchaseCompleter(**data)
+        except RefundNotAllowedError as error:
+            return Response(
+                {'detail': str(error)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if event_type == ItemPurchase.ItemPurchaseStatus.PAID:
+            # PAID because this function should be called only when it's gift
+            item_purchase_processor.accept_gift()
+            return Response(status=status.HTTP_200_OK)
+        elif event_type == ItemPurchase.ItemPurchaseStatus.REFUNDED:
+            item_purchase_processor.take_refund()
+            return Response(status=status.HTTP_202_ACCEPTED)
+        else:
+            raise
